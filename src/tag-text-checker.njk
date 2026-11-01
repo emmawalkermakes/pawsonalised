@@ -1,0 +1,60 @@
+---
+layout: page.njk
+title: Pet tag text checker
+description: Check roughly how much text fits on a round or bone-shaped pet ID tag, and whether you've included the details that help a lost pet get home.
+permalink: /tag-text-checker/
+---
+<p>Enter your tag size and the lines you want on it. This gives a <strong>rough estimate</strong> of whether the text will be readable, based on simple letter-size rules of thumb. Every maker's fonts and methods differ, so always check the seller's own preview before ordering.</p>
+<div class="tool">
+  <label for="shape">Tag shape</label>
+  <select id="shape"><option value="round">Round</option><option value="bone">Bone / rectangle</option></select>
+  <label for="w">Width or diameter (mm)</label>
+  <input id="w" type="number" min="15" max="60" value="35">
+  <label for="h">Height (mm, bone/rectangle only)</label>
+  <input id="h" type="number" min="10" max="40" value="20">
+  <label for="size">Letter height</label>
+  <select id="size"><option value="2.5" selected>Small (about 2.5 mm)</option><option value="3">Medium (about 3 mm)</option><option value="4">Large (about 4 mm)</option></select>
+  <label for="lines">Tag text (one item per line)</label>
+  <textarea id="lines" rows="5" style="width:100%;max-width:22rem;font:inherit;padding:.45rem;border:1px solid #ccd;border-radius:6px">BISCUIT
+0400 000 000
+CHIPPED</textarea>
+  <div id="out" aria-live="polite"></div>
+</div>
+<h2>How the estimate works</h2>
+<p>Capital letters are assumed to be roughly 0.6 to 0.7 times as wide as they are tall, with a little space between lines and a margin around the edge. On a round tag, lines near the top and bottom are shorter than the middle line, so the usable width is reduced. It's a guide, not a guarantee.</p>
+<p>For what to put on the tag (and what to leave off), read <a href="/posts/personalised-pet-tags-what-to-engrave/">Personalised pet tags: what to engrave and what to leave off</a>.</p>
+<script>
+(function () {
+  var $ = function (id) { return document.getElementById(id); };
+  function run() {
+    var shape = $("shape").value, w = +$("w").value || 30, h = shape === "round" ? w : (+$("h").value || 20);
+    var ch = +$("size").value, lineH = ch * 1.5, margin = 3;
+    var lines = $("lines").value.split("\n").map(function (s) { return s.trim(); }).filter(Boolean);
+    var maxLines = Math.max(1, Math.floor((h - 2 * margin) / lineH));
+    var html = "<p><strong>About " + maxLines + " line" + (maxLines > 1 ? "s" : "") + " fit</strong> at this letter height.</p><ul class='results'>";
+    var n = lines.length, problems = 0;
+    lines.forEach(function (text, i) {
+      var usable = w - 2 * margin;
+      if (shape === "round") {
+        var y = (i - (n - 1) / 2) * lineH, r = w / 2 - margin;
+        usable = Math.abs(y) < r ? 2 * Math.sqrt(r * r - y * y) : 0;
+      }
+      var fit = Math.floor(usable / (ch * 0.68)), ok = text.length <= fit;
+      if (!ok) problems++;
+      html += "<li>" + (ok ? "✅ " : "⚠️ ") + "<strong>" + text.replace(/</g, "&lt;") + "</strong> — " + text.length + " characters, about " + fit + " fit on this line</li>";
+    });
+    html += "</ul>";
+    if (n > maxLines) html += "<p>⚠️ You have " + n + " lines; about " + maxLines + " fit. Try a smaller letter size, a bigger tag, or using the back of the tag.</p>";
+    var all = lines.join(" ");
+    var tips = [];
+    if (!/\d{4}\s?\d{3}\s?\d{3}|\d{8,}/.test(all.replace(/[^\d ]/g, "") ) ) tips.push("No phone number found. A mobile number is the single most useful thing on a tag.");
+    if (!/chip/i.test(all)) tips.push("Consider adding 'MICROCHIPPED' so a finder knows a vet or council can scan for owner details.");
+    if (/\b\d+\s+\w+\s+(st|street|rd|road|ave|avenue|cres|ct|court|pde|parade|dr|drive)\b/i.test(all)) tips.push("You've included a street address. Many owners prefer a suburb only, or just a phone number, for privacy.");
+    if (tips.length) html += "<p><strong>Things to check:</strong></p><ul>" + tips.map(function (t) { return "<li>" + t + "</li>"; }).join("") + "</ul>";
+    else if (!problems) html += "<p>Looks good. Check the maker's preview before you order.</p>";
+    $("out").innerHTML = html;
+  }
+  ["shape", "w", "h", "size", "lines"].forEach(function (id) { $(id).addEventListener("input", run); });
+  run();
+})();
+</script>

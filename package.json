@@ -1,0 +1,15 @@
+{
+  "name": "pawsonalised",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Personalised ideas for Aussie dogs, cats and the people who love them.",
+  "scripts": {
+    "build": "npx @11ty/eleventy",
+    "start": "npx @11ty/eleventy --serve",
+    "clean": "rm -rf _site"
+  },
+  "devDependencies": {
+    "@11ty/eleventy": "^3.1.7"
+  }
+}
